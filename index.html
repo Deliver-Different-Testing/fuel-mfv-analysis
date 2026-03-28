@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urgent Couriers — MFV Fuel Analysis (March 2026)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 24px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+  .card { background: #fff; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 1.15rem; margin-bottom: 16px; color: #1a1a1a; }
+  .card h3 { font-size: 0.95rem; margin: 16px 0 8px; color: #444; }
+  .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .kpi { background: #f8f9fa; border-radius: 8px; padding: 16px 20px; flex: 1; min-width: 140px; text-align: center; }
+  .kpi .value { font-size: 1.6rem; font-weight: 700; color: #1a56db; }
+  .kpi .label { font-size: 0.78rem; color: #666; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: #1a1a2e; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px; }
+  td { padding: 9px 12px; border-bottom: 1px solid #eee; }
+  tr:hover td { background: #f8f9fa; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pos { color: #059669; font-weight: 600; }
+  .neg { color: #dc2626; font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .tag-ok { background: #d1fae5; color: #065f46; }
+  .tag-warn { background: #fef3c7; color: #92400e; }
+  .tag-bad { background: #fee2e2; color: #991b1b; }
+  .bar-cell { position: relative; }
+  .bar-bg { position: absolute; left: 0; top: 0; bottom: 0; opacity: 0.12; border-radius: 2px; }
+  .bar-green { background: #059669; }
+  .bar-red { background: #dc2626; }
+  .note { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 0.88rem; margin-top: 16px; color: #78350f; }
+  .note strong { color: #92400e; }
+  .section-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .assumptions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: 0.85rem; color: #555; }
+  .assumptions span { color: #1a1a1a; font-weight: 600; }
+  .verdict { font-size: 1rem; line-height: 1.6; }
+  .verdict strong { color: #059669; }
+  .chart-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 0.85rem; }
+  .chart-label { width: 90px; text-align: right; color: #666; flex-shrink: 0; }
+  .chart-bar-wrap { flex: 1; height: 26px; background: #f1f5f9; border-radius: 4px; position: relative; overflow: hidden; }
+  .chart-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 0.75rem; font-weight: 600; color: #fff; min-width: 40px; }
+  .chart-val { width: 60px; text-align: right; font-weight: 600; flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .kpi-row { flex-direction: column; }
+    .assumptions { grid-template-columns: 1fr; }
+    body { padding: 12px; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🛢️ MFV Fuel Adjustment Analysis</h1>
+<p class="subtitle">Urgent Couriers — March 2026 | Does the fuel matrix cover actual driver costs?</p>
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi"><div class="value">$11,426</div><div class="label">Total MFV Paid</div></div>
+  <div class="kpi"><div class="value">$109,716</div><div class="label">Total Courier Pay</div></div>
+  <div class="kpi"><div class="value">158</div><div class="label">Unique Drivers</div></div>
+  <div class="kpi"><div class="value">6.3%</div><div class="label">Current MFV Rate</div></div>
+  <div class="kpi"><div class="value">$2.584</div><div class="label">March Pump Price</div></div>
+</div>
+
+<!-- Assumptions -->
+<div class="card">
+  <h2>Assumptions</h2>
+  <div class="assumptions">
+    <div>Vehicle: <span>Toyota Hiace (Petrol & Diesel)</span></div>
+    <div>Base fuel price: <span>$1.86/L (0% MFV threshold)</span></div>
+    <div>Petrol consumption: <span>12 L/100km (urban, loaded)</span></div>
+    <div>Diesel consumption: <span>9.5 L/100km (urban, loaded)</span></div>
+    <div>Price difference: <span>$0.724/L above base</span></div>
+    <div>Data source: <span>tblCourierStats + tucJobArchive</span></div>
+  </div>
+</div>
+
+<!-- Main results table -->
+<div class="card">
+  <h2>MFV Adequacy by Daily Kilometres</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Real km data from GPS tracking matched to daily courier earnings and MFV payments</p>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Daily Kms</th>
+        <th class="num">Driver-Days</th>
+        <th class="num">Avg Kms</th>
+        <th class="num">Avg Pay</th>
+        <th class="num">MFV Received</th>
+        <th class="num">Petrol Extra Cost</th>
+        <th class="num">Diesel Extra Cost</th>
+        <th class="num">Petrol Surplus</th>
+        <th class="num">Diesel Surplus</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>0–100 km</td>
+        <td class="num">45</td>
+        <td class="num">66</td>
+        <td class="num">$277</td>
+        <td class="num">$26.09</td>
+        <td class="num">$5.74</td>
+        <td class="num">$4.54</td>
+        <td class="num pos">+$20.35</td>
+        <td class="num pos">+$21.55</td>
+        <td><span class="tag tag-ok">✓ Covered</span></td>
+      </tr>
+      <tr>
+        <td>100–200 km</td>
+        <td class="num">117</td>
+        <td class="num">154</td>
+        <td class="num">$290</td>
+        <td class="num">$33.26</td>
+        <td class="num">$13.37</td>
+        <td class="num">$10.59</td>
+        <td class="num pos">+$19.89</td>
+        <td class="num pos">+$22.67</td>
+        <td><span class="tag tag-ok">✓ Covered</span></td>
+      </tr>
+      <tr>
+        <td>200–300 km</td>
+        <td class="num">101</td>
+        <td class="num">237</td>
+        <td class="num">$346</td>
+        <td class="num">$37.62</td>
+        <td class="num">$20.62</td>
+        <td class="num">$16.32</td>
+        <td class="num pos">+$17.01</td>
+        <td class="num pos">+$21.30</td>
+        <td><span class="tag tag-ok">✓ Covered</span></td>
+      </tr>
+      <tr>
+        <td>300–400 km</td>
+        <td class="num">20</td>
+        <td class="num">340</td>
+        <td class="num">$558</td>
+        <td class="num">$60.26</td>
+        <td class="num">$29.50</td>
+        <td class="num">$23.36</td>
+        <td class="num pos">+$30.76</td>
+        <td class="num pos">+$36.90</td>
+        <td><span class="tag tag-ok">✓ Covered</span></td>
+      </tr>
+      <tr>
+        <td>400–500 km</td>
+        <td class="num">4</td>
+        <td class="num">448</td>
+        <td class="num">$580</td>
+        <td class="num">$63.71</td>
+        <td class="num">$38.88</td>
+        <td class="num">$30.78</td>
+        <td class="num pos">+$24.83</td>
+        <td class="num pos">+$32.93</td>
+        <td><span class="tag tag-ok">✓ Covered</span></td>
+      </tr>
+      <tr style="background:#fef2f2;">
+        <td><strong>500+ km</strong></td>
+        <td class="num">9</td>
+        <td class="num">731</td>
+        <td class="num">$412</td>
+        <td class="num">$45.52</td>
+        <td class="num">$63.47</td>
+        <td class="num">$50.25</td>
+        <td class="num neg">−$17.95</td>
+        <td class="num neg">−$4.73</td>
+        <td><span class="tag tag-bad">✗ Short</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <strong>500km+ driver-days</strong> represent only <strong>3%</strong> of all driver-days (9 of 296). These are likely regional/linehaul runs with high km but lower revenue per km — the only scenario where the MFV falls short.
+  </div>
+</div>
+
+<!-- Visual: surplus/deficit chart -->
+<div class="card">
+  <h2>Petrol Surplus / Deficit by Km Band</h2>
+  <div style="margin-top:12px;">
+    <div class="chart-row">
+      <div class="chart-label">0–100 km</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:67%;background:#059669;">+$20.35</div></div>
+      <div class="chart-val pos">+$20.35</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">100–200 km</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:65%;background:#059669;">+$19.89</div></div>
+      <div class="chart-val pos">+$19.89</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">200–300 km</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:56%;background:#059669;">+$17.01</div></div>
+      <div class="chart-val pos">+$17.01</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">300–400 km</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:100%;background:#059669;">+$30.76</div></div>
+      <div class="chart-val pos">+$30.76</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">400–500 km</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:81%;background:#059669;">+$24.83</div></div>
+      <div class="chart-val pos">+$24.83</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">500+ km</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:58%;background:#dc2626;">−$17.95</div></div>
+      <div class="chart-val neg">−$17.95</div>
+    </div>
+  </div>
+</div>
+
+<!-- MFV rate history -->
+<div class="card">
+  <h2>MFV Rate History (from tblFuelSurcharge)</h2>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr><th>Month</th><th class="num">Pump Price</th><th class="num">MFV Rate</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Mar 2026</td><td class="num">$2.584</td><td class="num">6.30%</td></tr>
+      <tr><td>Feb 2026</td><td class="num">$2.577</td><td class="num">6.30%</td></tr>
+      <tr><td>Jan 2026</td><td class="num">$2.759</td><td class="num">8.10%</td></tr>
+      <tr><td>Dec 2025</td><td class="num">$2.692</td><td class="num">7.40%</td></tr>
+      <tr><td>Nov 2025</td><td class="num">$2.597</td><td class="num">6.50%</td></tr>
+      <tr><td>Oct 2025</td><td class="num">$2.609</td><td class="num">6.60%</td></tr>
+      <tr><td>Sep 2025</td><td class="num">$2.597</td><td class="num">6.50%</td></tr>
+      <tr><td>Aug 2025</td><td class="num">$2.569</td><td class="num">6.20%</td></tr>
+      <tr><td>Jul 2025</td><td class="num">$2.615</td><td class="num">6.70%</td></tr>
+      <tr><td>Jun 2025</td><td class="num">$2.566</td><td class="num">6.10%</td></tr>
+      <tr><td>May 2025</td><td class="num">$2.616</td><td class="num">6.70%</td></tr>
+      <tr><td>Apr 2025</td><td class="num">$2.652</td><td class="num">7.00%</td></tr>
+      <tr><td>Mar 2025</td><td class="num">$2.736</td><td class="num">7.90%</td></tr>
+      <tr><td>Feb 2025</td><td class="num">$2.781</td><td class="num">8.30%</td></tr>
+      <tr><td>Jan 2025</td><td class="num">$2.724</td><td class="num">7.70%</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- MFV % distribution -->
+<div class="card">
+  <h2>Actual MFV % Applied to Jobs (March 2026)</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">CourierFuel ÷ CourierPayment — shows different effective rates across the fleet</p>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr><th>Effective MFV %</th><th class="num">Jobs</th><th class="num">Share</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>~6.3%</td><td class="num">59</td><td class="num">0.8%</td></tr>
+      <tr><td>~9.0%</td><td class="num">1,678</td><td class="num">22.3%</td></tr>
+      <tr><td>~9.2–9.7%</td><td class="num">51</td><td class="num">0.7%</td></tr>
+      <tr><td>~10.5%</td><td class="num">760</td><td class="num">10.1%</td></tr>
+      <tr style="background:#f0fdf4;"><td><strong>~10.7–11.0%</strong></td><td class="num"><strong>3,349</strong></td><td class="num"><strong>44.6%</strong></td></tr>
+      <tr><td>~11.5%</td><td class="num">200</td><td class="num">2.7%</td></tr>
+      <tr><td>~12.6–13.2%</td><td class="num">549</td><td class="num">7.3%</td></tr>
+      <tr><td>~14.0%</td><td class="num">1,254</td><td class="num">16.7%</td></tr>
+      <tr><td>Other</td><td class="num">41</td><td class="num">0.5%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note">
+    The 6.3% MFV is applied to the <strong>base job amount</strong> (what the client pays). But drivers receive a <strong>percentage of the base</strong> as their pay — so the fuel component is a higher proportion of the courier payment. The most common effective ratio is ~11%, which means the typical driver commission rate is roughly 55–60%.
+  </div>
+</div>
+
+<!-- Verdict -->
+<div class="card">
+  <h2>Verdict</h2>
+  <div class="verdict">
+    <p><strong>The MFV matrix is fit for purpose for 97% of driver-days.</strong></p>
+    <br>
+    <p>For the core Auckland Hiace fleet doing urban round-town work (up to ~500km/day), the fuel adjustment more than covers the additional fuel cost versus the $1.86 base — for both petrol and diesel vehicles.</p>
+    <br>
+    <p>The <strong>only gap</strong> is on high-km days (500km+), representing just 3% of driver-days. These appear to be regional or linehaul runs where the driver covers significant distance but earns comparatively less revenue per km. In these cases, the petrol shortfall averages ~$18/day.</p>
+    <br>
+    <p><strong>Options for the 500km+ gap:</strong></p>
+    <ul style="margin:8px 0 0 20px;line-height:1.8;">
+      <li>Accept as-is (only 3% of days, small population)</li>
+      <li>Introduce a vehicle-size or run-type override for regional/linehaul</li>
+      <li>Apply a km-based floor to the MFV calculation for long-distance work</li>
+    </ul>
+  </div>
+</div>
+
+<p style="text-align:center;color:#999;font-size:0.75rem;margin-top:24px;">
+  Generated from Despatch-Urgent-Prod production data • tblFuelSurcharge + tblCourierStats + tucJobArchive • March 2026
+</p>
+
+</div>
+</body>
+</html>
