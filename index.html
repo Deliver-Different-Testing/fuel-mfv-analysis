@@ -114,11 +114,21 @@
     </div>
   </div>
 
-  <div style="margin-bottom: 12px;">
-    <label style="font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Fuel Type</label>
-    <div class="fuel-toggle" style="margin-top:6px;">
-      <button id="btnPetrol" class="active" onclick="setFuelType('petrol')">Petrol (12 L/100km)</button>
-      <button id="btnDiesel" onclick="setFuelType('diesel')">Diesel (9.5 L/100km)</button>
+  <div style="margin-bottom: 12px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+    <div>
+      <label style="font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Fuel Type</label>
+      <div class="fuel-toggle" style="margin-top:6px;">
+        <button id="btnPetrol" class="active" onclick="setFuelType('petrol')">Petrol</button>
+        <button id="btnDiesel" onclick="setFuelType('diesel')">Diesel</button>
+        <button id="btnCustom" onclick="setFuelType('custom')">Custom</button>
+      </div>
+    </div>
+    <div>
+      <label for="consumptionSlider" style="font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Consumption (L/100km)</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="range" class="sim-slider" id="consumptionSlider" min="5" max="25" step="0.5" value="12" style="width:180px;">
+        <span id="consumptionDisplay" style="font-size:1.3rem;font-weight:700;color:#1a56db;min-width:80px;">12.0 L</span>
+      </div>
     </div>
   </div>
 
@@ -156,7 +166,7 @@
   <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">At what fuel price does each km band start losing money?</p>
   <div style="overflow-x:auto;">
   <table>
-    <thead>
+    <thead id="breakevenHead">
       <tr>
         <th>Daily Kms</th>
         <th class="num">Avg Kms</th>
@@ -267,8 +277,14 @@ const BUCKETS = [
 ];
 
 const BASE_PRICE = 1.86;
-let fuelType = 'petrol'; // petrol or diesel
-const CONSUMPTION = { petrol: 12.0, diesel: 9.5 };
+let fuelType = 'petrol';
+const PRESETS = { petrol: 12.0, diesel: 9.5 };
+let customConsumption = 12.0;
+
+function getConsumption() {
+  if (fuelType === 'custom') return customConsumption;
+  return PRESETS[fuelType] || 12.0;
+}
 
 function getMfvRate(pumpPrice) {
   if (pumpPrice <= BASE_PRICE) return 0;
@@ -291,7 +307,7 @@ function getMfvRate(pumpPrice) {
 function calculate(pumpPrice) {
   const rate = getMfvRate(pumpPrice) / 100;
   const priceDiff = Math.max(0, pumpPrice - BASE_PRICE);
-  const lPer100 = CONSUMPTION[fuelType];
+  const lPer100 = getConsumption();
 
   return BUCKETS.map(b => {
     const mfvReceived = b.avgPay * rate;
@@ -376,7 +392,8 @@ function update() {
   // Chart
   const chartEl = document.getElementById('chartBars');
   const chartTitle = document.getElementById('chartTitle');
-  chartTitle.textContent = `${fuelType === 'petrol' ? 'Petrol' : 'Diesel'} Surplus / Deficit by Km Band — $${price.toFixed(2)}/L`;
+  const fuelLabel = fuelType === 'custom' ? `${getConsumption().toFixed(1)} L/100km` : fuelType === 'petrol' ? 'Petrol' : 'Diesel';
+  chartTitle.textContent = `${fuelLabel} Surplus / Deficit by Km Band — $${price.toFixed(2)}/L`;
   const maxAbs = Math.max(...results.map(r => Math.abs(r.surplus)), 1);
   chartEl.innerHTML = results.map(r => {
     const ok = r.surplus >= 0;
@@ -393,11 +410,23 @@ function setFuelType(type) {
   fuelType = type;
   document.getElementById('btnPetrol').classList.toggle('active', type === 'petrol');
   document.getElementById('btnDiesel').classList.toggle('active', type === 'diesel');
+  document.getElementById('btnCustom').classList.toggle('active', type === 'custom');
+  const slider = document.getElementById('consumptionSlider');
+  if (type !== 'custom') {
+    slider.value = PRESETS[type];
+    document.getElementById('consumptionDisplay').textContent = PRESETS[type].toFixed(1) + ' L';
+  }
   update();
   updateBreakeven();
 }
 
 function updateBreakeven() {
+  const thead = document.getElementById('breakevenHead');
+  if (fuelType === 'custom') {
+    thead.innerHTML = `<tr><th>Daily Kms</th><th class="num">Avg Kms</th><th class="num">Avg Base Pay</th><th class="num">${getConsumption().toFixed(1)} L/100km Breakeven</th></tr>`;
+  } else {
+    thead.innerHTML = `<tr><th>Daily Kms</th><th class="num">Avg Kms</th><th class="num">Avg Base Pay</th><th class="num">Petrol Breakeven</th><th class="num">Diesel Breakeven</th></tr>`;
+  }
   const tbody = document.getElementById('breakevenBody');
   tbody.innerHTML = '';
   BUCKETS.forEach(b => {
@@ -415,21 +444,46 @@ function updateBreakeven() {
       }
       return (lo + hi) / 2;
     }
+    const currentL = getConsumption();
+    const be = findBreakeven(currentL);
     const petrolBE = findBreakeven(12.0);
     const dieselBE = findBreakeven(9.5);
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${b.label}</td>
-      <td class="num">${b.avgKms.toFixed(0)}</td>
-      <td class="num">$${b.avgPay.toFixed(0)}</td>
-      <td class="num" style="color:${petrolBE < 3.0 ? '#dc2626' : petrolBE < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${petrolBE.toFixed(2)}/L</td>
-      <td class="num" style="color:${dieselBE < 3.0 ? '#dc2626' : dieselBE < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${dieselBE.toFixed(2)}/L</td>
-    `;
+    if (fuelType === 'custom') {
+      tr.innerHTML = `
+        <td>${b.label}</td>
+        <td class="num">${b.avgKms.toFixed(0)}</td>
+        <td class="num">$${b.avgPay.toFixed(0)}</td>
+        <td class="num" style="color:${be < 3.0 ? '#dc2626' : be < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${be.toFixed(2)}/L</td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td>${b.label}</td>
+        <td class="num">${b.avgKms.toFixed(0)}</td>
+        <td class="num">$${b.avgPay.toFixed(0)}</td>
+        <td class="num" style="color:${petrolBE < 3.0 ? '#dc2626' : petrolBE < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${petrolBE.toFixed(2)}/L</td>
+        <td class="num" style="color:${dieselBE < 3.0 ? '#dc2626' : dieselBE < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${dieselBE.toFixed(2)}/L</td>
+      `;
+    }
     tbody.appendChild(tr);
   });
 }
 
 // Event listeners
+document.getElementById('consumptionSlider').addEventListener('input', function() {
+  customConsumption = parseFloat(this.value);
+  document.getElementById('consumptionDisplay').textContent = customConsumption.toFixed(1) + ' L';
+  // If user moves consumption slider, switch to custom mode
+  if (fuelType !== 'custom') {
+    const preset = PRESETS[fuelType];
+    if (Math.abs(customConsumption - preset) > 0.1) {
+      setFuelType('custom');
+      return; // setFuelType calls update
+    }
+  }
+  update();
+  updateBreakeven();
+});
 document.getElementById('priceSlider').addEventListener('input', update);
 document.querySelectorAll('.scenario-pill').forEach(pill => {
   pill.addEventListener('click', () => {
