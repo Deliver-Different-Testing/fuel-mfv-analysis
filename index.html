@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urgent Couriers — MFV Fuel Analysis</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 24px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
+  .card { background: #fff; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 1.15rem; margin-bottom: 16px; color: #1a1a1a; }
+  .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .kpi { background: #f8f9fa; border-radius: 8px; padding: 16px 20px; flex: 1; min-width: 130px; text-align: center; }
+  .kpi .value { font-size: 1.5rem; font-weight: 700; color: #1a56db; }
+  .kpi .label { font-size: 0.75rem; color: #666; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: #1a1a2e; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.3px; }
+  td { padding: 9px 12px; border-bottom: 1px solid #eee; }
+  tr:hover td { background: #f8f9fa; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pos { color: #059669; font-weight: 600; }
+  .neg { color: #dc2626; font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .tag-ok { background: #d1fae5; color: #065f46; }
+  .tag-warn { background: #fef3c7; color: #92400e; }
+  .tag-bad { background: #fee2e2; color: #991b1b; }
+  .note { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 0.88rem; margin-top: 16px; color: #78350f; }
+  .note strong { color: #92400e; }
+  .assumptions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-size: 0.85rem; color: #555; }
+  .assumptions span { color: #1a1a1a; font-weight: 600; }
+
+  /* Simulator */
+  .sim-controls { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sim-slider-wrap { flex: 1; min-width: 250px; }
+  .sim-slider-wrap label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+  .sim-slider { width: 100%; height: 8px; -webkit-appearance: none; appearance: none; background: #e2e8f0; border-radius: 4px; outline: none; }
+  .sim-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #1a56db; cursor: pointer; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .sim-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #1a56db; cursor: pointer; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .sim-price-display { font-size: 2.2rem; font-weight: 800; color: #1a56db; min-width: 120px; text-align: center; }
+  .sim-rate-display { text-align: center; min-width: 100px; }
+  .sim-rate-display .value { font-size: 1.8rem; font-weight: 700; color: #059669; }
+  .sim-rate-display .label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .fuel-toggle { display: flex; gap: 0; border-radius: 6px; overflow: hidden; border: 2px solid #1a56db; margin-bottom: 4px; }
+  .fuel-toggle button { padding: 8px 18px; border: none; background: #fff; color: #1a56db; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+  .fuel-toggle button.active { background: #1a56db; color: #fff; }
+
+  .chart-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 0.85rem; }
+  .chart-label { width: 90px; text-align: right; color: #666; flex-shrink: 0; }
+  .chart-bar-wrap { flex: 1; height: 28px; background: #f1f5f9; border-radius: 4px; position: relative; overflow: hidden; }
+  .chart-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 0.75rem; font-weight: 600; color: #fff; min-width: 2px; transition: width 0.3s ease; }
+  .chart-val { width: 70px; text-align: right; font-weight: 600; flex-shrink: 0; transition: color 0.3s; }
+
+  .verdict { font-size: 1rem; line-height: 1.6; }
+  .verdict strong { color: #059669; }
+
+  .row-bad td { background: #fef2f2; }
+
+  .scenario-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .scenario-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid #ddd; background: #fff; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+  .scenario-pill:hover { border-color: #1a56db; color: #1a56db; }
+  .scenario-pill.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+
+  @media (max-width: 640px) {
+    .kpi-row { flex-direction: column; }
+    .assumptions { grid-template-columns: 1fr; }
+    .sim-controls { flex-direction: column; align-items: stretch; }
+    body { padding: 12px; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🛢️ MFV Fuel Adjustment Analysis</h1>
+<p class="subtitle">Urgent Couriers — Interactive Model | Based on March 2026 production data</p>
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi"><div class="value">$11,426</div><div class="label">Mar MFV Paid</div></div>
+  <div class="kpi"><div class="value">$109,716</div><div class="label">Mar Courier Pay</div></div>
+  <div class="kpi"><div class="value">158</div><div class="label">Unique Drivers</div></div>
+  <div class="kpi"><div class="value" id="kpi-rate">6.3%</div><div class="label">Current MFV Rate</div></div>
+  <div class="kpi"><div class="value" id="kpi-pump">$2.584</div><div class="label">Mar Pump Price</div></div>
+</div>
+
+<!-- Interactive Simulator -->
+<div class="card" id="simulator">
+  <h2>⚡ Fuel Price Simulator</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">Drag the slider to see how the MFV matrix holds up at different pump prices</p>
+
+  <div class="scenario-pills">
+    <button class="scenario-pill active" data-price="2.584">Current ($2.58)</button>
+    <button class="scenario-pill" data-price="2.80">$2.80</button>
+    <button class="scenario-pill" data-price="3.00">$3.00</button>
+    <button class="scenario-pill" data-price="3.20">$3.20</button>
+    <button class="scenario-pill" data-price="3.50">$3.50</button>
+    <button class="scenario-pill" data-price="4.00">Extreme ($4.00)</button>
+  </div>
+
+  <div class="sim-controls">
+    <div class="sim-slider-wrap">
+      <label>Pump Price ($/Litre)</label>
+      <input type="range" class="sim-slider" id="priceSlider" min="1.86" max="4.00" step="0.01" value="2.584">
+    </div>
+    <div class="sim-price-display" id="simPrice">$2.584</div>
+    <div class="sim-rate-display">
+      <div class="value" id="simRate">6.3%</div>
+      <div class="label">MFV Rate</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 12px;">
+    <label style="font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Fuel Type</label>
+    <div class="fuel-toggle" style="margin-top:6px;">
+      <button id="btnPetrol" class="active" onclick="setFuelType('petrol')">Petrol (12 L/100km)</button>
+      <button id="btnDiesel" onclick="setFuelType('diesel')">Diesel (9.5 L/100km)</button>
+    </div>
+  </div>
+
+  <!-- Results table -->
+  <div style="overflow-x:auto;">
+  <table id="simTable">
+    <thead>
+      <tr>
+        <th>Daily Kms</th>
+        <th class="num">Driver-Days</th>
+        <th class="num">Avg Kms</th>
+        <th class="num">Avg Base Pay</th>
+        <th class="num">MFV Received</th>
+        <th class="num">Extra Fuel Cost</th>
+        <th class="num">Surplus / Deficit</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="simBody"></tbody>
+  </table>
+  </div>
+
+  <div id="simSummary" class="note" style="margin-top:16px;"></div>
+</div>
+
+<!-- Visual chart -->
+<div class="card">
+  <h2 id="chartTitle">Surplus / Deficit by Km Band</h2>
+  <div id="chartBars"></div>
+</div>
+
+<!-- Breakeven analysis -->
+<div class="card">
+  <h2>Breakeven Analysis</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">At what fuel price does each km band start losing money?</p>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Daily Kms</th>
+        <th class="num">Avg Kms</th>
+        <th class="num">Avg Base Pay</th>
+        <th class="num">Petrol Breakeven</th>
+        <th class="num">Diesel Breakeven</th>
+      </tr>
+    </thead>
+    <tbody id="breakevenBody"></tbody>
+  </table>
+  </div>
+  <div class="note">
+    <strong>Breakeven</strong> = the pump price where MFV received exactly equals extra fuel cost. Above this price, the driver is out of pocket.
+  </div>
+</div>
+
+<!-- MFV rate history -->
+<div class="card">
+  <h2>MFV Rate History (tblFuelSurcharge)</h2>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>Month</th><th class="num">Pump Price</th><th class="num">MFV Rate</th></tr></thead>
+    <tbody>
+      <tr><td>Mar 2026</td><td class="num">$2.584</td><td class="num">6.30%</td></tr>
+      <tr><td>Feb 2026</td><td class="num">$2.577</td><td class="num">6.30%</td></tr>
+      <tr><td>Jan 2026</td><td class="num">$2.759</td><td class="num">8.10%</td></tr>
+      <tr><td>Dec 2025</td><td class="num">$2.692</td><td class="num">7.40%</td></tr>
+      <tr><td>Nov 2025</td><td class="num">$2.597</td><td class="num">6.50%</td></tr>
+      <tr><td>Oct 2025</td><td class="num">$2.609</td><td class="num">6.60%</td></tr>
+      <tr><td>Sep 2025</td><td class="num">$2.597</td><td class="num">6.50%</td></tr>
+      <tr><td>Aug 2025</td><td class="num">$2.569</td><td class="num">6.20%</td></tr>
+      <tr><td>Jul 2025</td><td class="num">$2.615</td><td class="num">6.70%</td></tr>
+      <tr><td>Jun 2025</td><td class="num">$2.566</td><td class="num">6.10%</td></tr>
+      <tr><td>May 2025</td><td class="num">$2.616</td><td class="num">6.70%</td></tr>
+      <tr><td>Apr 2025</td><td class="num">$2.652</td><td class="num">7.00%</td></tr>
+      <tr><td>Mar 2025</td><td class="num">$2.736</td><td class="num">7.90%</td></tr>
+      <tr><td>Feb 2025</td><td class="num">$2.781</td><td class="num">8.30%</td></tr>
+      <tr><td>Jan 2025</td><td class="num">$2.724</td><td class="num">7.70%</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- Assumptions -->
+<div class="card">
+  <h2>Methodology</h2>
+  <div class="assumptions">
+    <div>Vehicle: <span>Toyota Hiace (Petrol & Diesel)</span></div>
+    <div>Base fuel price: <span>$1.86/L (0% MFV threshold)</span></div>
+    <div>Petrol consumption: <span>12 L/100km (urban, loaded)</span></div>
+    <div>Diesel consumption: <span>9.5 L/100km (urban, loaded)</span></div>
+    <div>MFV calculation: <span>Rate % × base job amount</span></div>
+    <div>Driver receives: <span>100% of fuel surcharge</span></div>
+    <div>Km source: <span>tblCourierStats (GPS tracking)</span></div>
+    <div>Pay/fuel source: <span>tucJobArchive (March 2026)</span></div>
+  </div>
+</div>
+
+<p style="text-align:center;color:#999;font-size:0.75rem;margin-top:24px;">
+  Generated from Despatch-Urgent-Prod • tblFuelSurcharge + tblCourierStats + tucJobArchive
+</p>
+
+</div>
+
+<script>
+// MFV lookup table from the image (pump price → MFV %)
+// Reconstructed from the matrix: starts at $1.86 = 0%, increments per $0.01
+const MFV_TABLE = [
+  [1.84, 0], [1.85, 0], [1.86, 0], [1.87, 0], [1.88, 0], [1.89, 0],
+  [1.90, 0], [1.91, 0], [1.92, 0.1], [1.93, 0.2], [1.94, 0.3], [1.95, 0.4],
+  [1.96, 0.4], [1.97, 0.5], [1.98, 0.6], [1.99, 0.7], [2.00, 0.8], [2.01, 0.9],
+  [2.02, 1.0], [2.03, 1.1], [2.04, 1.2], [2.05, 1.3], [2.06, 1.3], [2.07, 1.4],
+  [2.08, 1.5], [2.09, 1.6], [2.10, 1.7], [2.11, 1.8], [2.12, 1.9], [2.13, 2.2],
+  [2.14, 2.1], [2.15, 2.1], [2.16, 2.2], [2.17, 2.3], [2.18, 2.4], [2.19, 2.5],
+  [2.20, 2.6], [2.21, 2.7], [2.22, 2.8], [2.23, 2.8], [2.24, 2.9], [2.25, 3.0],
+  [2.26, 3.1], [2.27, 3.2], [2.28, 3.1], [2.29, 3.2], [2.30, 3.5],
+  [2.32, 3.7], [2.33, 3.8], [2.34, 3.9], [2.35, 4.0], [2.36, 4.1],
+  [2.37, 4.2], [2.38, 4.3], [2.39, 4.4], [2.40, 4.5], [2.41, 4.6],
+  [2.42, 4.7], [2.43, 4.8], [2.44, 4.9], [2.45, 5.0], [2.46, 5.1],
+  [2.47, 5.2], [2.48, 5.2], [2.49, 5.4], [2.50, 5.5], [2.51, 5.6],
+  [2.52, 5.7], [2.53, 5.9], [2.54, 5.9], [2.55, 6.0],
+  [2.56, 6.1], [2.57, 6.2], [2.58, 6.3], [2.59, 6.4], [2.60, 6.5],
+  [2.61, 6.6], [2.62, 6.7], [2.63, 6.8], [2.64, 6.9], [2.65, 7.0],
+  [2.66, 7.1], [2.67, 7.2], [2.68, 7.4], [2.69, 7.5], [2.70, 7.5],
+  [2.71, 7.5], [2.72, 7.7], [2.73, 7.8], [2.74, 7.9], [2.75, 8.0],
+  [2.76, 8.1], [2.77, 8.2], [2.78, 8.3], [2.79, 8.4],
+  [2.80, 8.5], [2.81, 8.6], [2.82, 8.7], [2.83, 8.8], [2.84, 8.9],
+  [2.85, 9.0], [2.86, 9.1], [2.87, 9.2], [2.88, 9.3], [2.89, 9.4],
+  [2.90, 9.5], [2.91, 9.6], [2.92, 9.7], [2.93, 9.8], [2.94, 9.9],
+  [2.95, 10.0], [2.96, 10.1], [2.97, 10.2], [2.98, 10.3], [2.99, 10.4],
+  [3.00, 10.5], [3.01, 10.6], [3.02, 10.7], [3.03, 10.8],
+  [3.04, 10.9], [3.05, 11.0], [3.06, 11.1], [3.07, 11.2],
+  [3.08, 11.3], [3.09, 11.4], [3.10, 11.5], [3.11, 11.5],
+  [3.12, 11.7], [3.13, 11.7], [3.14, 11.8], [3.15, 12.0],
+  [3.16, 12.1], [3.17, 12.2], [3.18, 12.3], [3.19, 12.5],
+  [3.20, 12.5], [3.21, 12.6], [3.22, 12.7], [3.23, 12.8],
+  [3.24, 12.9], [3.25, 13.0], [3.26, 13.1], [3.27, 13.2],
+];
+
+// Driver km buckets from production data
+const BUCKETS = [
+  { label: '0–100 km', avgKms: 66.04, avgPay: 277.30, driverDays: 45 },
+  { label: '100–200 km', avgKms: 153.93, avgPay: 290.14, driverDays: 117 },
+  { label: '200–300 km', avgKms: 237.30, avgPay: 346.40, driverDays: 101 },
+  { label: '300–400 km', avgKms: 339.57, avgPay: 557.94, driverDays: 20 },
+  { label: '400–500 km', avgKms: 447.52, avgPay: 580.00, driverDays: 4 },
+  { label: '500+ km', avgKms: 730.53, avgPay: 412.37, driverDays: 9 },
+];
+
+const BASE_PRICE = 1.86;
+let fuelType = 'petrol'; // petrol or diesel
+const CONSUMPTION = { petrol: 12.0, diesel: 9.5 };
+
+function getMfvRate(pumpPrice) {
+  if (pumpPrice <= BASE_PRICE) return 0;
+  // Find closest match in table
+  let best = MFV_TABLE[0];
+  for (const entry of MFV_TABLE) {
+    if (entry[0] <= pumpPrice) best = entry;
+    else break;
+  }
+  // Extrapolate beyond table
+  if (pumpPrice > MFV_TABLE[MFV_TABLE.length - 1][0]) {
+    const last = MFV_TABLE[MFV_TABLE.length - 1];
+    const secondLast = MFV_TABLE[MFV_TABLE.length - 2];
+    const slope = (last[1] - secondLast[1]) / (last[0] - secondLast[0]);
+    return last[1] + slope * (pumpPrice - last[0]);
+  }
+  return best[1];
+}
+
+function calculate(pumpPrice) {
+  const rate = getMfvRate(pumpPrice) / 100;
+  const priceDiff = Math.max(0, pumpPrice - BASE_PRICE);
+  const lPer100 = CONSUMPTION[fuelType];
+
+  return BUCKETS.map(b => {
+    const mfvReceived = b.avgPay * rate;
+    // MFV is on base job amount. avgPay is courier payment (their % of base).
+    // But Steve said MFV = rate% of raw base amount, and driver gets 100% of fuel.
+    // avgPay here is CourierPayment. The base job amount would be higher.
+    // From data: CourierFuel/CourierPayment ~ 10-11% when rate is 6.3%
+    // This means base amount ≈ CourierPayment / ~0.57 (driver gets ~57%)
+    // MFV = rate * baseAmount = rate * (CourierPayment / commissionRate)
+    // From actual data at 6.3%: avg fuel = $36.75, avg pay = $349.35
+    // So baseAmount = 36.75 / 0.063 = $583.33, commission = 349.35/583.33 = 59.9%
+    // Let's use the actual relationship: MFV = CourierPayment * (rate / 0.6)
+    // Actually simpler: from the data, at 6.3%, the avg MFV ratio to pay is ~10.4%
+    // So effective multiplier = 10.4/6.3 = 1.651
+    // This means base job ≈ pay / 0.6 and MFV = rate * (pay / 0.6)
+    const baseJobAmount = b.avgPay / 0.6;
+    const mfv = baseJobAmount * rate;
+    const extraFuelCost = (b.avgKms / 100) * lPer100 * priceDiff;
+    const surplus = mfv - extraFuelCost;
+    return { ...b, mfv, extraFuelCost, surplus, rate };
+  });
+}
+
+function formatMoney(v) {
+  return (v < 0 ? '−' : '') + '$' + Math.abs(v).toFixed(2);
+}
+
+function update() {
+  const price = parseFloat(document.getElementById('priceSlider').value);
+  const rate = getMfvRate(price);
+  const results = calculate(price);
+
+  document.getElementById('simPrice').textContent = '$' + price.toFixed(2);
+  document.getElementById('simRate').textContent = rate.toFixed(1) + '%';
+  document.getElementById('simRate').style.color = rate > 0 ? '#059669' : '#999';
+
+  // Update pills
+  document.querySelectorAll('.scenario-pill').forEach(p => {
+    p.classList.toggle('active', Math.abs(parseFloat(p.dataset.price) - price) < 0.005);
+  });
+
+  // Table
+  const tbody = document.getElementById('simBody');
+  tbody.innerHTML = '';
+  let totalOk = 0, totalDays = 0;
+  results.forEach(r => {
+    const ok = r.surplus >= 0;
+    if (ok) totalOk += r.driverDays;
+    totalDays += r.driverDays;
+    const tr = document.createElement('tr');
+    if (!ok) tr.className = 'row-bad';
+    tr.innerHTML = `
+      <td>${r.label}</td>
+      <td class="num">${r.driverDays}</td>
+      <td class="num">${r.avgKms.toFixed(0)}</td>
+      <td class="num">$${r.avgPay.toFixed(0)}</td>
+      <td class="num">$${r.mfv.toFixed(2)}</td>
+      <td class="num">$${r.extraFuelCost.toFixed(2)}</td>
+      <td class="num ${ok ? 'pos' : 'neg'}">${ok ? '+' : '−'}$${Math.abs(r.surplus).toFixed(2)}</td>
+      <td><span class="tag ${ok ? 'tag-ok' : r.surplus > -10 ? 'tag-warn' : 'tag-bad'}">${ok ? '✓ Covered' : '✗ Short'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Summary
+  const pctOk = ((totalOk / totalDays) * 100).toFixed(0);
+  const shortBuckets = results.filter(r => r.surplus < 0);
+  const summaryEl = document.getElementById('simSummary');
+  if (shortBuckets.length === 0) {
+    summaryEl.innerHTML = `<strong>All clear.</strong> At $${price.toFixed(2)}/L (${rate.toFixed(1)}% MFV), all km bands are fully covered for ${fuelType}. ${pctOk}% of driver-days in surplus.`;
+    summaryEl.style.borderColor = '#059669';
+    summaryEl.style.background = '#f0fdf4';
+    summaryEl.style.color = '#065f46';
+  } else {
+    const worstDeficit = Math.min(...shortBuckets.map(r => r.surplus));
+    summaryEl.innerHTML = `<strong>${shortBuckets.length} km band${shortBuckets.length > 1 ? 's' : ''} undercompensated.</strong> At $${price.toFixed(2)}/L (${rate.toFixed(1)}% MFV), ${pctOk}% of driver-days are covered. Worst daily deficit: <strong>${formatMoney(worstDeficit)}</strong> (${fuelType}).`;
+    summaryEl.style.borderColor = '#f59e0b';
+    summaryEl.style.background = '#fffbeb';
+    summaryEl.style.color = '#78350f';
+  }
+
+  // Chart
+  const chartEl = document.getElementById('chartBars');
+  const chartTitle = document.getElementById('chartTitle');
+  chartTitle.textContent = `${fuelType === 'petrol' ? 'Petrol' : 'Diesel'} Surplus / Deficit by Km Band — $${price.toFixed(2)}/L`;
+  const maxAbs = Math.max(...results.map(r => Math.abs(r.surplus)), 1);
+  chartEl.innerHTML = results.map(r => {
+    const ok = r.surplus >= 0;
+    const pct = Math.min(100, (Math.abs(r.surplus) / maxAbs) * 100);
+    return `<div class="chart-row">
+      <div class="chart-label">${r.label}</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:${pct}%;background:${ok ? '#059669' : '#dc2626'};">${ok ? '+' : '−'}$${Math.abs(r.surplus).toFixed(2)}</div></div>
+      <div class="chart-val" style="color:${ok ? '#059669' : '#dc2626'};">${ok ? '+' : '−'}$${Math.abs(r.surplus).toFixed(2)}</div>
+    </div>`;
+  }).join('');
+}
+
+function setFuelType(type) {
+  fuelType = type;
+  document.getElementById('btnPetrol').classList.toggle('active', type === 'petrol');
+  document.getElementById('btnDiesel').classList.toggle('active', type === 'diesel');
+  update();
+  updateBreakeven();
+}
+
+function updateBreakeven() {
+  const tbody = document.getElementById('breakevenBody');
+  tbody.innerHTML = '';
+  BUCKETS.forEach(b => {
+    const baseJobAmount = b.avgPay / 0.6;
+    function findBreakeven(lPer100) {
+      // At breakeven: baseJobAmount * rate(price)/100 = (avgKms/100) * lPer100 * (price - 1.86)
+      // Binary search
+      let lo = 1.86, hi = 5.00;
+      for (let i = 0; i < 50; i++) {
+        const mid = (lo + hi) / 2;
+        const rate = getMfvRate(mid) / 100;
+        const mfv = baseJobAmount * rate;
+        const cost = (b.avgKms / 100) * lPer100 * (mid - BASE_PRICE);
+        if (mfv >= cost) lo = mid; else hi = mid;
+      }
+      return (lo + hi) / 2;
+    }
+    const petrolBE = findBreakeven(12.0);
+    const dieselBE = findBreakeven(9.5);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${b.label}</td>
+      <td class="num">${b.avgKms.toFixed(0)}</td>
+      <td class="num">$${b.avgPay.toFixed(0)}</td>
+      <td class="num" style="color:${petrolBE < 3.0 ? '#dc2626' : petrolBE < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${petrolBE.toFixed(2)}/L</td>
+      <td class="num" style="color:${dieselBE < 3.0 ? '#dc2626' : dieselBE < 3.5 ? '#d97706' : '#059669'};font-weight:600;">$${dieselBE.toFixed(2)}/L</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Event listeners
+document.getElementById('priceSlider').addEventListener('input', update);
+document.querySelectorAll('.scenario-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.getElementById('priceSlider').value = pill.dataset.price;
+    update();
+  });
+});
+
+// Init
+update();
+updateBreakeven();
+</script>
+</body>
+</html>
