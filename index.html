@@ -8,6 +8,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 24px; }
   .container { max-width: 1100px; margin: 0 auto; }
+  /* Page tabs */
+  .page-tabs { display: flex; gap: 0; margin-bottom: 24px; border-radius: 8px; overflow: hidden; border: 2px solid #1a56db; }
+  .page-tab { flex: 1; padding: 12px 20px; border: none; background: #fff; color: #1a56db; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .page-tab:hover { background: #eff6ff; }
+  .page-tab.active { background: #1a56db; color: #fff; }
+  .model-page { display: none; }
+  .model-page.active { display: block; }
   h1 { font-size: 1.6rem; margin-bottom: 4px; }
   .subtitle { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
   .card { background: #fff; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
@@ -76,6 +83,12 @@
 <body>
 <div class="container">
 
+<div class="page-tabs">
+  <button class="page-tab active" onclick="switchModel('petrol')">🛢️ Current Model (Petrol)</button>
+  <button class="page-tab" onclick="switchModel('diesel')">🔄 Diesel Rebase Model</button>
+</div>
+
+<div class="model-page active" id="page-petrol">
 <h1>🛢️ MFV Fuel Adjustment Analysis</h1>
 <p class="subtitle">Urgent Couriers — Interactive Model | Based on March 2026 production data</p>
 
@@ -228,6 +241,179 @@
 <p style="text-align:center;color:#999;font-size:0.75rem;margin-top:24px;">
   Generated from Despatch-Urgent-Prod • tblFuelSurcharge + tblCourierStats + tucJobArchive
 </p>
+</div><!-- end page-petrol -->
+
+<!-- ==================== DIESEL REBASE MODEL ==================== -->
+<div class="model-page" id="page-diesel">
+<h1>🔄 Diesel Rebase — Fuel Surcharge Model</h1>
+<p class="subtitle">Proposed model: Peg surcharge to diesel price, absorb floor into base rate | 13 L/100km real-world consumption</p>
+
+<!-- Rebase concept -->
+<div class="card" style="background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;">
+  <h2 style="color:#60a5fa;">💡 The Concept</h2>
+  <p style="color:#cbd5e1;line-height:1.7;margin-bottom:12px;">Move the fuel surcharge from petrol-based to <strong style="color:#60a5fa;">diesel-based</strong>, and rebase the 0% floor to the <strong style="color:#60a5fa;">4-year diesel price floor</strong> so the surcharge is never negative. The portion between the old base ($1.86) and the new floor gets permanently absorbed into base rates.</p>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+    <div class="kpi" style="background:rgba(255,255,255,0.08);"><div class="value" style="color:#60a5fa;">$1.73/L</div><div class="label" style="color:#94a3b8;">4-Year Diesel Low</div></div>
+    <div class="kpi" style="background:rgba(255,255,255,0.08);"><div class="value" style="color:#60a5fa;">$1.70/L</div><div class="label" style="color:#94a3b8;">Proposed New Base</div></div>
+    <div class="kpi" style="background:rgba(255,255,255,0.08);"><div class="value" style="color:#f59e0b;">13 L/100km</div><div class="label" style="color:#94a3b8;">Real-World Consumption</div></div>
+    <div class="kpi" style="background:rgba(255,255,255,0.08);"><div class="value" style="color:#34d399;">$2.61/L</div><div class="label" style="color:#94a3b8;">Mar 2026 Avg Diesel</div></div>
+  </div>
+</div>
+
+<!-- Diesel price history -->
+<div class="card">
+  <h2>📊 MBIE Diesel Price History (4 Years)</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Source: MBIE Weekly Fuel Price Monitoring — adjusted retail diesel prices</p>
+  <div class="kpi-row">
+    <div class="kpi"><div class="value" style="color:#dc2626;">$3.28/L</div><div class="label">Mar 2026 (Peak)</div></div>
+    <div class="kpi"><div class="value" style="color:#059669;">$1.73/L</div><div class="label">4-Year Low (Jan 2022)</div></div>
+    <div class="kpi"><div class="value">$1.75/L</div><div class="label">2nd Low (Oct 2024)</div></div>
+    <div class="kpi"><div class="value">$1.78/L</div><div class="label">3rd Low (Jun 2025)</div></div>
+  </div>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>Year</th><th class="num">Lowest Price</th><th class="num">Date</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>2022</td><td class="num"><strong>$1.730/L</strong></td><td class="num">Jan 7</td><td><span class="tag tag-ok">← Absolute 4yr low</span></td></tr>
+      <tr><td>2023</td><td class="num">$1.887/L</td><td class="num">Jun 23</td><td></td></tr>
+      <tr><td>2024</td><td class="num">$1.750/L</td><td class="num">Oct 4</td><td></td></tr>
+      <tr><td>2025</td><td class="num">$1.781/L</td><td class="num">Jun 13</td><td></td></tr>
+      <tr><td>2026 YTD</td><td class="num">$1.861/L</td><td class="num">Feb 20</td><td><span class="tag tag-warn">Rising sharply</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note" style="margin-top:12px;">
+    <strong>Proposed base: $1.70/L</strong> — below the absolute 4-year low of $1.73/L, providing a safety buffer. Diesel has not been below $1.70 since 2021.
+  </div>
+</div>
+
+<!-- Diesel Simulator -->
+<div class="card" id="d-simulator">
+  <h2>⚡ Diesel Rebase Simulator</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">Drag the slider to model the new diesel-pegged surcharge at different pump prices</p>
+
+  <div class="scenario-pills">
+    <button class="scenario-pill d-pill" data-price="1.70" onclick="dSetPrice(1.70)">Base ($1.70)</button>
+    <button class="scenario-pill d-pill" data-price="1.86" onclick="dSetPrice(1.86)">$1.86</button>
+    <button class="scenario-pill d-pill" data-price="2.00" onclick="dSetPrice(2.00)">$2.00</button>
+    <button class="scenario-pill d-pill active" data-price="2.61" onclick="dSetPrice(2.61)">Current ($2.61)</button>
+    <button class="scenario-pill d-pill" data-price="3.00" onclick="dSetPrice(3.00)">$3.00</button>
+    <button class="scenario-pill d-pill" data-price="3.28" onclick="dSetPrice(3.28)">Mar Peak ($3.28)</button>
+  </div>
+
+  <div class="sim-controls">
+    <div class="sim-slider-wrap">
+      <label>Diesel Pump Price ($/Litre)</label>
+      <input type="range" class="sim-slider" id="dPriceSlider" min="1.50" max="4.00" step="0.01" value="2.61">
+    </div>
+    <div class="sim-price-display" id="dSimPrice">$2.61</div>
+    <div class="sim-rate-display">
+      <div class="value" id="dSimRate">--</div>
+      <div class="label">New Surcharge %</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;">
+    <div>
+      <label style="font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">New Diesel Base (0% floor)</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="range" class="sim-slider" id="dBaseSlider" min="1.50" max="2.00" step="0.01" value="1.70" style="width:200px;">
+        <span id="dBaseDisplay" style="font-size:1.3rem;font-weight:700;color:#1a56db;">$1.70</span>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Consumption (L/100km)</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="range" class="sim-slider" id="dConsSlider" min="8" max="18" step="0.5" value="13" style="width:180px;">
+        <span id="dConsDisplay" style="font-size:1.3rem;font-weight:700;color:#1a56db;">13.0 L</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Daily Kms</th>
+        <th class="num">Driver-Days</th>
+        <th class="num">Avg Kms</th>
+        <th class="num">Avg Base Pay</th>
+        <th class="num">New Surcharge</th>
+        <th class="num">Extra Fuel Cost</th>
+        <th class="num">Surplus / Deficit</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="dSimBody"></tbody>
+  </table>
+  </div>
+  <div id="dSimSummary" class="note" style="margin-top:16px;"></div>
+</div>
+
+<!-- Diesel chart -->
+<div class="card">
+  <h2 id="dChartTitle">Diesel Surplus / Deficit by Km Band</h2>
+  <div id="dChartBars"></div>
+</div>
+
+<!-- Side-by-side comparison -->
+<div class="card">
+  <h2>🔀 Old vs New Model Comparison</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Same March 2026 production data, comparing petrol-based MFV vs diesel-pegged surcharge</p>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th class="num">Old (Petrol MFV)</th>
+        <th class="num">New (Diesel Rebase)</th>
+        <th class="num">Difference</th>
+      </tr>
+    </thead>
+    <tbody id="dCompareBody"></tbody>
+  </table>
+  </div>
+  <div id="dCompareNote" class="note" style="margin-top:12px;"></div>
+</div>
+
+<!-- Diesel monthly history -->
+<div class="card">
+  <h2>Monthly Diesel Prices (MBIE Data)</h2>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead><tr><th>Month</th><th class="num">Avg Diesel Price</th><th class="num">New Surcharge %</th><th class="num">Old Petrol MFV %</th></tr></thead>
+    <tbody id="dHistoryBody"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- Base rate absorption -->
+<div class="card">
+  <h2>📈 Base Rate Absorption Calculator</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">How much of the old surcharge gets permanently absorbed into base rates</p>
+  <div class="kpi-row" id="dAbsorptionKpis"></div>
+  <div id="dAbsorptionNote" class="note"></div>
+</div>
+
+<!-- Methodology -->
+<div class="card">
+  <h2>Methodology</h2>
+  <div class="assumptions">
+    <div>Vehicle: <span>Mixed fleet (diesel dominant)</span></div>
+    <div>Diesel base price: <span id="dMethodBase">$1.70/L (0% surcharge)</span></div>
+    <div>Diesel consumption: <span id="dMethodCons">13 L/100km (real-world, loaded, urban)</span></div>
+    <div>Surcharge calc: <span>Linear % based on price above base</span></div>
+    <div>Driver receives: <span>100% of fuel surcharge</span></div>
+    <div>Diesel source: <span>MBIE weekly adjusted retail price</span></div>
+    <div>Km/pay source: <span>tblCourierStats + tucJobArchive (Mar 2026)</span></div>
+    <div>RUC: <span>Not included (distance-based, not pump-price)</span></div>
+  </div>
+</div>
+
+<p style="text-align:center;color:#999;font-size:0.75rem;margin-top:24px;">
+  Diesel prices: MBIE Weekly Fuel Price Monitoring (2022–2026) • Production data: Despatch-Urgent-Prod
+</p>
+</div><!-- end page-diesel -->
 
 </div>
 
@@ -495,6 +681,213 @@ document.querySelectorAll('.scenario-pill').forEach(pill => {
 // Init
 update();
 updateBreakeven();
+
+// ==================== PAGE SWITCHING ====================
+function switchModel(model) {
+  document.querySelectorAll('.model-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + model).classList.add('active');
+  document.querySelectorAll('.page-tab').forEach(t => {
+    if ((model === 'petrol' && t.textContent.includes('Current')) || (model === 'diesel' && t.textContent.includes('Diesel'))) {
+      t.classList.add('active');
+    }
+  });
+  window.scrollTo(0, 0);
+  if (model === 'diesel') dUpdate();
+}
+
+// ==================== DIESEL REBASE MODEL ====================
+// Monthly diesel prices (MBIE data, 2025-2026)
+const DIESEL_MONTHLY = [
+  { month: 'Jan 2025', diesel: 1.970, petrolMfv: 7.7 },
+  { month: 'Feb 2025', diesel: 1.992, petrolMfv: 8.3 },
+  { month: 'Mar 2025', diesel: 1.949, petrolMfv: 7.9 },
+  { month: 'Apr 2025', diesel: 1.898, petrolMfv: 7.0 },
+  { month: 'May 2025', diesel: 1.823, petrolMfv: 6.7 },
+  { month: 'Jun 2025', diesel: 1.802, petrolMfv: 6.1 },
+  { month: 'Jul 2025', diesel: 1.849, petrolMfv: 6.7 },
+  { month: 'Aug 2025', diesel: 1.849, petrolMfv: 6.2 },
+  { month: 'Sep 2025', diesel: 1.864, petrolMfv: 6.5 },
+  { month: 'Oct 2025', diesel: 1.895, petrolMfv: 6.6 },
+  { month: 'Nov 2025', diesel: 1.943, petrolMfv: 7.4 },
+  { month: 'Dec 2025', diesel: 1.951, petrolMfv: 7.4 },
+  { month: 'Jan 2026', diesel: 1.895, petrolMfv: 8.1 },
+  { month: 'Feb 2026', diesel: 1.864, petrolMfv: 6.3 },
+  { month: 'Mar 2026', diesel: 2.606, petrolMfv: 6.3 },
+];
+
+function dGetBase() { return parseFloat(document.getElementById('dBaseSlider').value); }
+function dGetCons() { return parseFloat(document.getElementById('dConsSlider').value); }
+
+// New diesel surcharge: linear scale from base
+// We calibrate so the surcharge at the old petrol model's current rate (~6.3%) roughly aligns
+// Formula: surcharge% = (dieselPrice - base) / base * scaleFactor
+// Using a simple proportional model: each $0.01 above base = ~0.1% surcharge
+// This gives ~9.1% at $2.61 with base $1.70 — reasonable for diesel fleet
+function dGetRate(dieselPrice, base) {
+  if (dieselPrice <= base) return 0;
+  // Linear: every cent above base = 0.1% surcharge
+  const centsAbove = Math.round((dieselPrice - base) * 100);
+  return centsAbove * 0.1;
+}
+
+function dCalculate(dieselPrice) {
+  const base = dGetBase();
+  const rate = dGetRate(dieselPrice, base) / 100;
+  const priceDiff = Math.max(0, dieselPrice - base);
+  const lPer100 = dGetCons();
+
+  return BUCKETS.map(b => {
+    const baseJobAmount = b.avgPay / 0.6;
+    const surcharge = baseJobAmount * rate;
+    const extraFuelCost = (b.avgKms / 100) * lPer100 * priceDiff;
+    const surplus = surcharge - extraFuelCost;
+    return { ...b, surcharge, extraFuelCost, surplus, rate };
+  });
+}
+
+function dSetPrice(price) {
+  document.getElementById('dPriceSlider').value = price;
+  dUpdate();
+}
+
+function dUpdate() {
+  const price = parseFloat(document.getElementById('dPriceSlider').value);
+  const base = dGetBase();
+  const cons = dGetCons();
+  const rate = dGetRate(price, base);
+  const results = dCalculate(price);
+
+  document.getElementById('dSimPrice').textContent = '$' + price.toFixed(2);
+  document.getElementById('dSimRate').textContent = rate.toFixed(1) + '%';
+  document.getElementById('dSimRate').style.color = rate > 0 ? '#059669' : '#999';
+
+  // Update pills
+  document.querySelectorAll('.d-pill').forEach(p => {
+    p.classList.toggle('active', Math.abs(parseFloat(p.dataset.price) - price) < 0.005);
+  });
+
+  // Method labels
+  document.getElementById('dMethodBase').textContent = '$' + base.toFixed(2) + '/L (0% surcharge)';
+  document.getElementById('dMethodCons').textContent = cons.toFixed(1) + ' L/100km (real-world, loaded, urban)';
+  document.getElementById('dBaseDisplay').textContent = '$' + base.toFixed(2);
+  document.getElementById('dConsDisplay').textContent = cons.toFixed(1) + ' L';
+
+  // Table
+  const tbody = document.getElementById('dSimBody');
+  tbody.innerHTML = '';
+  let totalOk = 0, totalDays = 0, totalSurcharge = 0, totalFuel = 0;
+  results.forEach(r => {
+    const ok = r.surplus >= 0;
+    if (ok) totalOk += r.driverDays;
+    totalDays += r.driverDays;
+    totalSurcharge += r.surcharge * r.driverDays;
+    totalFuel += r.extraFuelCost * r.driverDays;
+    const tr = document.createElement('tr');
+    if (!ok) tr.className = 'row-bad';
+    tr.innerHTML = `
+      <td>${r.label}</td>
+      <td class="num">${r.driverDays}</td>
+      <td class="num">${r.avgKms.toFixed(0)}</td>
+      <td class="num">$${r.avgPay.toFixed(0)}</td>
+      <td class="num">$${r.surcharge.toFixed(2)}</td>
+      <td class="num">$${r.extraFuelCost.toFixed(2)}</td>
+      <td class="num ${ok ? 'pos' : 'neg'}">${ok ? '+' : '−'}$${Math.abs(r.surplus).toFixed(2)}</td>
+      <td><span class="tag ${ok ? 'tag-ok' : r.surplus > -10 ? 'tag-warn' : 'tag-bad'}">${ok ? '✓ Covered' : '✗ Short'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Summary
+  const pctOk = ((totalOk / totalDays) * 100).toFixed(0);
+  const shortBuckets = results.filter(r => r.surplus < 0);
+  const summaryEl = document.getElementById('dSimSummary');
+  if (shortBuckets.length === 0) {
+    summaryEl.innerHTML = `<strong>All clear.</strong> At $${price.toFixed(2)}/L diesel (${rate.toFixed(1)}% surcharge, base $${base.toFixed(2)}), all km bands are fully covered at ${cons.toFixed(1)} L/100km. ${pctOk}% of driver-days in surplus.`;
+    summaryEl.style.borderColor = '#059669'; summaryEl.style.background = '#f0fdf4'; summaryEl.style.color = '#065f46';
+  } else {
+    const worstDeficit = Math.min(...shortBuckets.map(r => r.surplus));
+    summaryEl.innerHTML = `<strong>${shortBuckets.length} km band${shortBuckets.length > 1 ? 's' : ''} undercompensated.</strong> At $${price.toFixed(2)}/L diesel (${rate.toFixed(1)}% surcharge), ${pctOk}% of driver-days covered. Worst daily deficit: <strong>${formatMoney(worstDeficit)}</strong>.`;
+    summaryEl.style.borderColor = '#f59e0b'; summaryEl.style.background = '#fffbeb'; summaryEl.style.color = '#78350f';
+  }
+
+  // Chart
+  const chartEl = document.getElementById('dChartBars');
+  document.getElementById('dChartTitle').textContent = `Diesel Surplus / Deficit by Km Band — $${price.toFixed(2)}/L`;
+  const maxAbs = Math.max(...results.map(r => Math.abs(r.surplus)), 1);
+  chartEl.innerHTML = results.map(r => {
+    const ok = r.surplus >= 0;
+    const pct = Math.min(100, (Math.abs(r.surplus) / maxAbs) * 100);
+    return `<div class="chart-row">
+      <div class="chart-label">${r.label}</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:${pct}%;background:${ok ? '#059669' : '#dc2626'};">${ok ? '+' : '−'}$${Math.abs(r.surplus).toFixed(2)}</div></div>
+      <div class="chart-val" style="color:${ok ? '#059669' : '#dc2626'};">${ok ? '+' : '−'}$${Math.abs(r.surplus).toFixed(2)}</div>
+    </div>`;
+  }).join('');
+
+  // Comparison table (old petrol at current petrol price $2.584 vs new diesel)
+  const oldPetrolPrice = 2.584;
+  const oldRate = getMfvRate(oldPetrolPrice) / 100;
+  const newRate = rate / 100;
+  const oldTotalMfv = BUCKETS.reduce((s, b) => s + (b.avgPay / 0.6) * oldRate * b.driverDays, 0);
+  const newTotalSurcharge = totalSurcharge;
+  const oldTotalFuel = BUCKETS.reduce((s, b) => s + (b.avgKms / 100) * 12 * (oldPetrolPrice - 1.86) * b.driverDays, 0);
+  const newTotalFuel = totalFuel;
+
+  const compBody = document.getElementById('dCompareBody');
+  compBody.innerHTML = `
+    <tr><td>Fuel type</td><td class="num">Petrol 91</td><td class="num"><strong>Diesel</strong></td><td class="num">—</td></tr>
+    <tr><td>Pump price</td><td class="num">$${oldPetrolPrice.toFixed(2)}/L</td><td class="num">$${price.toFixed(2)}/L</td><td class="num">${price < oldPetrolPrice ? '<span class="pos">Lower</span>' : '<span class="neg">Higher</span>'}</td></tr>
+    <tr><td>Consumption</td><td class="num">12.0 L/100km</td><td class="num">${cons.toFixed(1)} L/100km</td><td class="num">—</td></tr>
+    <tr><td>Base (0% floor)</td><td class="num">$1.86/L</td><td class="num">$${base.toFixed(2)}/L</td><td class="num">—</td></tr>
+    <tr><td>Surcharge rate</td><td class="num">${(oldRate * 100).toFixed(1)}%</td><td class="num">${rate.toFixed(1)}%</td><td class="num ${newRate < oldRate ? 'pos' : 'neg'}">${((newRate - oldRate) * 100).toFixed(1)}%</td></tr>
+    <tr><td>Total monthly surcharge paid</td><td class="num">$${oldTotalMfv.toFixed(0)}</td><td class="num">$${newTotalSurcharge.toFixed(0)}</td><td class="num ${newTotalSurcharge < oldTotalMfv ? 'pos' : 'neg'}">$${(newTotalSurcharge - oldTotalMfv).toFixed(0)}</td></tr>
+    <tr><td>Total monthly fuel cost above base</td><td class="num">$${oldTotalFuel.toFixed(0)}</td><td class="num">$${newTotalFuel.toFixed(0)}</td><td class="num">${newTotalFuel < oldTotalFuel ? '<span class="pos">−$' + (oldTotalFuel - newTotalFuel).toFixed(0) + '</span>' : '<span class="neg">+$' + (newTotalFuel - oldTotalFuel).toFixed(0) + '</span>'}</td></tr>
+    <tr><td>Net driver surplus (total)</td><td class="num ${oldTotalMfv > oldTotalFuel ? 'pos' : 'neg'}">$${(oldTotalMfv - oldTotalFuel).toFixed(0)}</td><td class="num ${newTotalSurcharge > newTotalFuel ? 'pos' : 'neg'}">$${(newTotalSurcharge - newTotalFuel).toFixed(0)}</td><td class="num">—</td></tr>
+  `;
+
+  document.getElementById('dCompareNote').innerHTML = `<strong>Note:</strong> Old model uses petrol at $2.584/L with 12 L/100km. New model uses diesel at $${price.toFixed(2)}/L with ${cons.toFixed(1)} L/100km. Both use the same March 2026 driver-days and pay data.`;
+
+  // Monthly history
+  const histBody = document.getElementById('dHistoryBody');
+  histBody.innerHTML = DIESEL_MONTHLY.map(m => {
+    const newR = dGetRate(m.diesel, base);
+    return `<tr>
+      <td>${m.month}</td>
+      <td class="num">$${m.diesel.toFixed(3)}/L</td>
+      <td class="num" style="color:${newR > 0 ? '#1a56db' : '#999'};font-weight:600;">${newR.toFixed(1)}%</td>
+      <td class="num" style="color:#666;">${m.petrolMfv.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+
+  // Absorption calculator
+  const absKpis = document.getElementById('dAbsorptionKpis');
+  // At the old base ($1.86), the old MFV was 0%. At the new base, we need to absorb everything up to new base.
+  // The "absorbed" surcharge = what drivers would have received at the new base under the OLD model
+  // At $1.70 diesel vs $1.86 petrol — these are different fuel types so absorption is conceptual
+  // Really: you're increasing base rates by X% to compensate for baking in the floor
+  // At the old petrol base ($1.86), MFV=0%. Average petrol pump in 2025 was ~$2.60, MFV ~6.3%.
+  // New diesel base $1.70, average diesel 2025 was ~$1.89, new surcharge ~1.9%
+  // So visible surcharge drops from ~6.3% to ~1.9% = ~4.4% absorbed into base
+  const avgDiesel2025 = 1.893; // average of 2025 monthly
+  const avgNewRate = dGetRate(avgDiesel2025, base);
+  const avgOldMfv = 6.8; // rough average petrol MFV 2025
+  const absorbed = avgOldMfv - avgNewRate;
+  absKpis.innerHTML = `
+    <div class="kpi"><div class="value" style="color:#1a56db;">${avgOldMfv.toFixed(1)}%</div><div class="label">Avg Old Petrol MFV (2025)</div></div>
+    <div class="kpi"><div class="value" style="color:#059669;">${avgNewRate.toFixed(1)}%</div><div class="label">Avg New Diesel Surcharge (2025)</div></div>
+    <div class="kpi"><div class="value" style="color:#f59e0b;">${absorbed.toFixed(1)}%</div><div class="label">Absorbed Into Base Rate</div></div>
+  `;
+  document.getElementById('dAbsorptionNote').innerHTML = `<strong>Recommendation:</strong> Increase base rates by approximately <strong>${absorbed.toFixed(1)}%</strong> to absorb the diesel floor. This makes the transition revenue-neutral — clients pay the same total, but see a smaller (or zero) fuel surcharge line on invoices. At the 2025 average diesel price of $${avgDiesel2025.toFixed(2)}/L, the new visible surcharge would have been just ${avgNewRate.toFixed(1)}% instead of ${avgOldMfv.toFixed(1)}%.`;
+}
+
+// Diesel event listeners
+document.getElementById('dPriceSlider').addEventListener('input', dUpdate);
+document.getElementById('dBaseSlider').addEventListener('input', dUpdate);
+document.getElementById('dConsSlider').addEventListener('input', dUpdate);
+
+// Init diesel
+dUpdate();
 </script>
 </body>
 </html>
