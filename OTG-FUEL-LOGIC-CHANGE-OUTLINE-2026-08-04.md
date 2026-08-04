@@ -42,11 +42,14 @@ This allows the existing behaviour to remain available, while enabling OTG's pre
 
 ### 2. Keep the default driver fuel percentage generic
 
-By default, continue using the generic percentage already stored against the vehicle size:
+Add a `DriverFuelPercentage` field to the MFV / client fuel configuration.
 
-- `VehicleSize.FuelPercentage`
+Behaviour:
 
-This keeps monthly or periodic updates simple, because the default percentage can still be maintained in one place.
+- if `DriverFuelPercentage` is populated for the client configuration, use it
+- if `DriverFuelPercentage` is null / not populated, fall back to `VehicleSize.FuelPercentage`
+
+This keeps monthly or periodic updates simple, because the default percentage can still be maintained in one place while still allowing client-specific driver fuel percentages where needed.
 
 ### 3. Allow client-specific override where required
 
@@ -55,7 +58,8 @@ If a client needs different behaviour, allow an override for that client.
 For OTG, the client override would set:
 
 - driver fuel basis = `DriverBase`
-- optional client-specific driver fuel percentage if OTG should not use the generic vehicle percentage
+- optional client-specific `DriverFuelPercentage`
+- if no client-specific `DriverFuelPercentage` is supplied, fall back to `VehicleSize.FuelPercentage`
 
 If no client override exists, the system should continue using the generic/default setup.
 
@@ -83,8 +87,8 @@ This is important because OTG explicitly do **not** want driver fuel paid when c
 - if client fuel is off, driver fuel is zero
 - if client fuel is on, calculate driver fuel against the **driver base** instead of the client base
 - use either:
-  - the generic vehicle percentage, or
-  - an OTG-specific percentage if OTG need their own rate
+  - the client-specific `DriverFuelPercentage`, or
+  - if that is blank, the generic `VehicleSize.FuelPercentage`
 
 ## Suggested decision hierarchy
 
@@ -93,7 +97,9 @@ When calculating driver fuel:
 1. Check whether fuel applies to that charge component at all.
    - if not, driver fuel = 0
 2. Check for a client-specific override.
-3. If there is no override, use the generic/default setup.
+3. Resolve the driver fuel percentage:
+   - use client `DriverFuelPercentage` if populated
+   - otherwise use `VehicleSize.FuelPercentage`
 4. Use the configured basis:
    - `ClientBase` = calculate from client charge amount
    - `DriverBase` = calculate from driver pay/base amount
@@ -110,6 +116,47 @@ Benefits:
 - avoids paying driver fuel when client fuel is off
 - gives flexibility later if another client wants the same behaviour
 
+## UI / configurator changes required
+
+This change also needs to be visible and maintainable in the UI.
+
+### Client-level configurator UI
+
+In the client detail / available services area of Configurator, add client-visible fields for the fuel behaviour for that service.
+
+Suggested fields:
+
+- client fuel enabled / existing fuel settings
+- driver fuel basis
+  - `ClientBase`
+  - `DriverBase`
+- driver fuel percentage override
+- clear indication that blank driver fuel percentage means fallback to `VehicleSize.FuelPercentage`
+
+This gives the team a way to see, per client and per available service, whether that client is using default behaviour or an override.
+
+### Configurator settings / admin setup UI
+
+A setup screen is also needed in Configurator settings (or the equivalent admin area) so these settings can be created and maintained.
+
+This should allow:
+
+- setting or changing default MFV / fuel settings
+- setting or changing client-specific fuel behaviour
+- setting or changing client-specific `DriverFuelPercentage`
+- choosing whether driver fuel is based on `ClientBase` or `DriverBase`
+- leaving `DriverFuelPercentage` blank to use the vehicle fallback
+
+### Existing fuel editing screen alignment
+
+The new fields should align with the existing fuel editing concepts already present in admin tooling, rather than introducing a completely separate fuel setup pattern.
+
+The goal should be:
+
+- one obvious place to maintain default fuel settings
+- one obvious place to see and override client-specific behaviour
+- no ambiguity about whether a client is using default or override logic
+
 ## What should change in the logic
 
 The key change is that the driver fuel calculation should no longer be hard-wired to client charge amounts only.
@@ -117,6 +164,7 @@ The key change is that the driver fuel calculation should no longer be hard-wire
 Instead, it should:
 
 - read a **driver fuel basis** setting
+- resolve a **driver fuel percentage** from client override first, then vehicle fallback
 - choose either client base or driver base
 - apply the chosen percentage
 - only do so when client fuel is enabled for that charge
@@ -128,8 +176,11 @@ The change should be considered correct when all of the below are true:
 1. A default client with no override continues to behave as it does today.
 2. OTG can be configured so driver fuel is calculated from **driver base**.
 3. If fuel is off for the client charge, driver fuel is also **0**.
-4. The default fuel percentage can still be maintained generically.
+4. The default driver fuel percentage can still be maintained generically.
 5. A client override can change the basis and, if needed, the percentage.
+6. If client `DriverFuelPercentage` is blank, the logic falls back to `VehicleSize.FuelPercentage`.
+7. Client/service fuel settings are visible in Configurator.
+8. Admin users have a settings screen to create or alter these rules.
 
 ## Recommended next step
 
