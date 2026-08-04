@@ -137,11 +137,13 @@ This gives the team a way to see, per client and per available service, whether 
 
 ### Configurator settings / admin setup UI
 
-A setup screen is also needed in Configurator settings (or the equivalent admin area) so these settings can be created and maintained.
+A setup screen is also needed in Configurator settings for client-level visibility and maintenance, but the default fuel setup should also extend the **existing Admin Manager fuel editing window** rather than creating a disconnected second setup pattern.
 
 This should allow:
 
 - setting or changing default MFV / fuel settings
+- setting or changing default `DriverFuelPercentage`
+- choosing the default driver fuel basis
 - setting or changing client-specific fuel behaviour
 - setting or changing client-specific `DriverFuelPercentage`
 - choosing whether driver fuel is based on `ClientBase` or `DriverBase`
@@ -149,7 +151,13 @@ This should allow:
 
 ### Existing fuel editing screen alignment
 
-The new fields should align with the existing fuel editing concepts already present in admin tooling, rather than introducing a completely separate fuel setup pattern.
+The new fields should align with the existing **Admin Manager fuel editing window** and existing fuel editing concepts already present in admin tooling, rather than introducing a completely separate fuel setup pattern.
+
+Recommended split:
+
+- **Admin Manager fuel editing window** = maintain default/global fuel settings
+- **Configurator client detail / available services** = show client-specific behaviour and overrides
+- **Configurator settings** = allow setup or maintenance of client-level override rules where needed
 
 The goal should be:
 
