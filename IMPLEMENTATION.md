@@ -15,6 +15,20 @@ The client feedback requires Fuel Surcharge to behave as a **named, reusable FSC
 
 ## 2. Architecture decision
 
+### UI perspective — two separate touchpoints are required
+
+The client request needs two distinct UI layers:
+
+1. **Rate setup / maintenance**
+   - this is where FSC profiles are attached to the underlying rate structure
+   - this is the default / structural assignment point
+
+2. **Client profile → Available Services in Configurator**
+   - this is where OTG can see which FSC profile a client/service is using
+   - this is the client-level visibility and override point
+
+That means the missing requirement is not only profile creation, but also being able to assign or override the selected FSC profile in both of those operational surfaces.
+
 ### Keep `tblFuelSurcharge` as the profile table
 
 Do **not** build a second fuel-profile table.
@@ -487,7 +501,34 @@ Actions:
 - activate/deactivate profile
 - edit percentages quickly
 
-## 8.2 Configurator → Client Detail → Available Services
+## 8.2 Rate setup / maintenance UI
+
+This is the first operational assignment point.
+
+Where rate structures are maintained, the UI needs to support both:
+
+- attaching the applicable FSC profile to the rate/service structure
+- maintaining the component-level inclusion rules for each side
+
+Required UI behaviour:
+
+- FSC profile selector on the applicable rate/service maintenance surface
+- visible indication of which profile is structurally assigned by default
+- courier-side companion flags exposed alongside the existing client-side fuel flags
+
+Examples:
+
+- `Fuel Surcharge Profile: [House FSC ▼]`
+- `Apply Base FSC (Client)`
+- `Apply Base FSC (Courier)`
+- `Apply Weight FSC (Client)`
+- `Apply Weight FSC (Courier)`
+
+This is the structural/default setup point.
+
+## 8.3 Configurator → Client Detail → Available Services
+
+This is the second operational assignment point.
 
 Inside `AvailableServicesTab.tsx`, add:
 
@@ -497,21 +538,11 @@ Inside `AvailableServicesTab.tsx`, add:
   - client FSC %
   - courier FSC %
   - selected profile name
+- clear indication of whether the client/service is:
+  - inheriting the rate/default FSC profile, or
+  - using a client-specific override
 
-This is where the client/service gets assigned its FSC profile in the rating area.
-
-## 8.3 Rate / extra charge maintenance UI
-
-Where `DistanceRate` and `ExtraCharge` are maintained, expose the courier-side companion flags.
-
-Examples:
-
-- `Apply Base FSC (Client)`
-- `Apply Base FSC (Courier)`
-- `Apply Weight FSC (Client)`
-- `Apply Weight FSC (Courier)`
-
-That is how OTG chooses which components are included on each side.
+This is the client-level visibility and override point.
 
 ## 9. Step-by-step checklist
 
@@ -524,16 +555,17 @@ That is how OTG chooses which components are included on each side.
 7. Extend client speed DTOs and controller/service payloads.
 8. Extend rate maintenance DTOs/payloads for new courier-side flags.
 9. Update Admin Manager fuel/profile UI.
-10. Update Configurator Available Services UI to assign FSC profile.
-11. Update the rating proc to:
+10. Update rate setup / maintenance UI so the applicable FSC profile can be attached to the rate/service structure.
+11. Update Configurator Available Services UI for client-level visibility and override of FSC profile.
+12. Update the rating proc to:
     - resolve selected profile
     - calculate client basis
     - calculate courier basis
     - zero courier FSC when client FSC is not charged
     - roll to one FSC line per side
-12. Update downstream invoice / settlement presentation if it currently shows component-level FSC lines.
-13. Add audit/history for profile assignment changes.
-14. Regression test non-OTG behaviour.
+13. Update downstream invoice / settlement presentation if it currently shows component-level FSC lines.
+14. Add audit/history for profile assignment changes.
+15. Regression test non-OTG behaviour.
 
 ## 10. Acceptance criteria
 
